@@ -289,37 +289,77 @@ GLvoid drawScene()
 		glm::vec3 cameraPos, cameraTarget, cameraUp;
 		glm::mat4 vTransform, pTransform;
 
-		// 각 뷰포트마다 다른 카메라 시점 설정
-		if (i == 0) 
+		float radX = glm::radians(angleCameraX);
+		float radY = glm::radians(angleCameraY);
+		float radZ = glm::radians(angleCameraZ);
+
+		if (i == 0)
 		{
-			// 첫 번째: 정면
-			cameraPos = glm::vec3(0.0f, 0.0f, 8.0f);
+			// 0: 원근투영, 일반 3D 카메라 회전
+			float radius = 8.0f;
+			cameraPos = glm::vec3(0.0f, 0.0f, radius);
+
+			// X, Y축 회전 적용
+			glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), radX, glm::vec3(1, 0, 0));
+			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
+			cameraPos = glm::vec3(rotYmat * rotX * glm::vec4(cameraPos, 1.0f));
+
 			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+
+			// Z축 회전(up벡터 회전)
 			cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+			glm::vec3 dir = glm::normalize(cameraTarget - cameraPos);
+			glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), radZ, dir);
+			cameraUp = glm::vec3(rollMat * glm::vec4(cameraUp, 0.0f));
+
+			vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 			pTransform = glm::perspective(glm::radians(45.0f), (float)viewWidth / (float)viewHeight, 0.1f, 100.0f);
 		}
 		else if (i == 1)
 		{
-			// 두 번째: xz 평면 (직각투영)
-			cameraPos = glm::vec3(0.0f, 8.0f, 0.01f);
+			// 1: xz 평면(위에서 내려다봄, 직각투영) + Y, Z축 회전
+			float radius = 8.0f;
+			cameraPos = glm::vec3(0.0f, radius, 0.0f);
+
+			// Y축 회전(수평 회전)
+			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
+			cameraPos = glm::vec3(rotYmat * glm::vec4(cameraPos, 1.0f));
+
 			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+
+			// up벡터는 -z, Z축 회전 적용
 			cameraUp = glm::vec3(0.0f, 0.0f, -1.0f);
-			// ortho(left, right, bottom, top, near, far)
+			glm::vec3 dir = glm::normalize(cameraTarget - cameraPos);
+			glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), radZ, dir);
+			cameraUp = glm::vec3(rollMat * glm::vec4(cameraUp, 0.0f));
+
+			vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 			pTransform = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
 		}
 		else
 		{
-			// 세 번째: xy 평면 (직각투영)
-			cameraPos = glm::vec3(0.0f, 0.0f, 8.0f);
+			// 2: xy 평면(앞에서 바라봄, 직각투영) + X, Y, Z축 회전
+			float radius = 8.0f;
+			cameraPos = glm::vec3(0.0f, 0.0f, radius);
+
+			// X, Y축 회전 적용
+			glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), radX, glm::vec3(1, 0, 0));
+			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
+			cameraPos = glm::vec3(rotYmat * rotX * glm::vec4(cameraPos, 1.0f));
+
 			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+
+			// up벡터는 +y, Z축 회전 적용
 			cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-			// ortho(left, right, bottom, top, near, far)
+			glm::vec3 dir = glm::normalize(cameraTarget - cameraPos);
+			glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), radZ, dir);
+			cameraUp = glm::vec3(rollMat * glm::vec4(cameraUp, 0.0f));
+
+			vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 			pTransform = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
 		}
 
-		vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &vTransform[0][0]);
-	
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &vTransform[0][0]);	
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, &pTransform[0][0]);
 
 		// 기존 drawScene의 바디(바닥, 탱크 등) 복사
