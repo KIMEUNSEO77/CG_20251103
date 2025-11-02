@@ -271,110 +271,111 @@ GLvoid drawScene()
 
 	glUseProgram(shaderProgramID);
 
-	GLint viewLoc = glGetUniformLocation(shaderProgramID, "view");
-	GLint projLoc = glGetUniformLocation(shaderProgramID, "projection");
+	int viewLeft[3] = { 0, 500, 500 };
+	int viewBottom[3] = { 0, 450, 0 };
+	int viewWidth = width / 2;
+	int viewHeight = height;
 
-	float radZ = glm::radians(angleCameraZ);
-	float radX = glm::radians(angleCameraX);
-	float radY = glm::radians(angleCameraY);
-	float radiusCenterY = 8.0f;   // 공전 반지름
-	float radCenterY = glm::radians(angleCameraCenterY);
-
-	glm::vec3 cameraPos, cameraTarget, cameraUp;
-
-	if (rotatingCameraCenterY)
+	for (int i = 0; i < 3; ++i)
 	{
-		cameraPos = glm::vec3(
-			radiusCenterY * sin(radCenterY),
-			0.0f,
-			radiusCenterY * cos(radCenterY)
-		);
-		cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);  // 원점을 바라보며 회전
+		if (i == 0) viewHeight = height;
+		else viewHeight = height / 2;
+
+		glViewport(viewLeft[i], viewBottom[i], viewWidth, viewHeight);
+
+		GLint viewLoc = glGetUniformLocation(shaderProgramID, "view");
+		GLint projLoc = glGetUniformLocation(shaderProgramID, "projection");
+
+		glm::vec3 cameraPos, cameraTarget, cameraUp;
+		glm::mat4 vTransform, pTransform;
+
+		// 각 뷰포트마다 다른 카메라 시점 설정
+		if (i == 0) 
+		{
+			// 첫 번째: 정면
+			cameraPos = glm::vec3(0.0f, 0.0f, 8.0f);
+			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+			cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+			pTransform = glm::perspective(glm::radians(45.0f), (float)viewWidth / (float)viewHeight, 0.1f, 100.0f);
+		}
+		else if (i == 1)
+		{
+			// 두 번째: xz 평면 (직각투영)
+			cameraPos = glm::vec3(0.0f, 8.0f, 0.01f);
+			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+			cameraUp = glm::vec3(0.0f, 0.0f, -1.0f);
+			// ortho(left, right, bottom, top, near, far)
+			pTransform = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
+		}
+		else
+		{
+			// 세 번째: xy 평면 (직각투영)
+			cameraPos = glm::vec3(0.0f, 0.0f, 8.0f);
+			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+			cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+			// ortho(left, right, bottom, top, near, far)
+			pTransform = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
+		}
+
+		vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &vTransform[0][0]);
+	
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, &pTransform[0][0]);
+
+		// 기존 drawScene의 바디(바닥, 탱크 등) 복사
+		float offsetY = moveZ * sin(glm::radians(-15.0f));
+
+		glm::mat4 ground = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
+		ground = glm::rotate(ground, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		ground = glm::scale(ground, glm::vec3(100.0f, 0.05f, 100.0f));
+		DrawCube(gTank, shaderProgramID, ground, glm::vec3(1.0f, 0.713f, 0.756f));
+
+		glm::mat4 M_tank = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, offsetY, 0.0f));
+		M_tank = glm::translate(M_tank, glm::vec3(moveX, 0.0f, moveZ));
+		M_tank = glm::rotate(M_tank, glm::radians(-15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		M_tank = glm::rotate(M_tank, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		glm::mat4 bottomBody = M_tank * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 0.5f, 1.0f));
+		DrawCube(gTank, shaderProgramID, bottomBody, glm::vec3(0.678f, 0.847f, 0.902f));
+
+		glm::mat4 M_turret = M_tank;
+		M_turret = glm::translate(M_turret, glm::vec3(0.0f, 0.4f, 0.0f));
+		M_turret = glm::rotate(M_turret, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		glm::mat4 middleBody = M_turret * glm::scale(glm::mat4(1.0f), glm::vec3(1.5f, 0.25f, 0.5f));
+		DrawCube(gTank, shaderProgramID, middleBody, glm::vec3(0.564f, 0.933f, 0.564f));
+
+		glm::mat4 M_top1 = M_turret * glm::translate(glm::mat4(1.0f), pos1);
+		glm::mat4 topBody1 = M_top1 * glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.5f, 0.5f));
+		DrawCube(gTank, shaderProgramID, topBody1, glm::vec3(0.784f, 0.635f, 0.784f));
+
+		glm::mat4 M_top2 = M_turret * glm::translate(glm::mat4(1.0f), pos2);
+		glm::mat4 topBody2 = M_top2 * glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.5f, 0.5f));
+		DrawCube(gTank, shaderProgramID, topBody2, glm::vec3(0.784f, 0.635f, 0.784f));
+
+		glm::mat4 flag1 = M_top1
+			* glm::rotate(glm::mat4(1.0f), glm::radians(angleFlag1), glm::vec3(1.0f, 0.0f, 0.0f))
+			* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.6f, 0.0f))
+			* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 1.0f, 0.1f));
+		DrawCube(gTank, shaderProgramID, flag1, glm::vec3(1.0f, 0.7f, 0.3f));
+
+		glm::mat4 flag2 = M_top2
+			* glm::rotate(glm::mat4(1.0f), glm::radians(angleFlag2), glm::vec3(1.0f, 0.0f, 0.0f))
+			* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.6f, 0.0f))
+			* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 1.0f, 0.1f));
+		DrawCube(gTank, shaderProgramID, flag2, glm::vec3(1.0f, 0.7f, 0.3f));
+
+		glm::mat4 barrel1 = M_top1
+			* glm::rotate(glm::mat4(1.0f), glm::radians(angleBarel1), glm::vec3(0.0f, 1.0f, 0.0f))
+			* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.2f, 0.5f))
+			* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 1.0f));
+		DrawCube(gTank, shaderProgramID, barrel1, glm::vec3(0.5f, 0.0f, 0.5f));
+
+		glm::mat4 barrel2 = M_top2
+			* glm::rotate(glm::mat4(1.0f), glm::radians(angleBarel2), glm::vec3(0.0f, 1.0f, 0.0f))
+			* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.2f, 0.5f))
+			* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 1.0f));
+		DrawCube(gTank, shaderProgramID, barrel2, glm::vec3(0.5f, 0.0f, 0.5f));
 	}
-	else
-	{
-		cameraPos = glm::vec3(0.0f, 0.0f, radiusCenterY);
-		glm::vec3 cameraDirection = glm::vec3(
-			-sin(radY) * cos(radX),
-			-sin(radX),
-			-cos(radY) * cos(radX)
-		);
-		cameraTarget = cameraPos + cameraDirection;  // 카메라 바라보는 방향 계산
-	}
-
-	cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-	glm::vec3 dir = glm::normalize(cameraTarget - cameraPos);
-	glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), radZ, dir);
-	cameraUp = glm::vec3(rollMat * glm::vec4(cameraUp, 0.0f));
-
-	glm::mat4 vTransform = glm::mat4(1.0f);
-	vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &vTransform[0][0]);
-
-	glm::mat4 pTransform = glm::mat4(1.0f);
-	pTransform = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, &pTransform[0][0]);
-
-	float offsetY = moveZ * sin(glm::radians(-15.0f));
-
-	// 바닥
-	glm::mat4 ground = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-	ground = glm::rotate(ground, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	ground = glm::scale(ground, glm::vec3(100.0f, 0.05f, 100.0f)); // 넓고 얇은 바닥
-	DrawCube(gTank, shaderProgramID, ground, glm::vec3(1.0f, 0.713f, 0.756f));
-
-	// 공통
-	glm::mat4 M_tank = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, offsetY, 0.0f));
-	M_tank = glm::translate(M_tank, glm::vec3(moveX, 0.0f, moveZ));
-	M_tank = glm::rotate(M_tank, glm::radians(-15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	M_tank = glm::rotate(M_tank, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	// 아래 몸체
-	glm::mat4 bottomBody = M_tank * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 0.5f, 1.0f));
-	DrawCube(gTank, shaderProgramID, bottomBody, glm::vec3(0.678f, 0.847f, 0.902f));
-
-	// 중앙 몸체
-	glm::mat4 M_turret = M_tank;
-	M_turret = glm::translate(M_turret, glm::vec3(0.0f, 0.4f, 0.0f));
-	M_turret = glm::rotate(M_turret, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
-
-	// 중앙 몸체
-	glm::mat4 middleBody = M_turret * glm::scale(glm::mat4(1.0f), glm::vec3(1.5f, 0.25f, 0.5f));
-	DrawCube(gTank, shaderProgramID, middleBody, glm::vec3(0.564f, 0.933f, 0.564f));
-
-	// 상단
-	glm::mat4 M_top1 = M_turret * glm::translate(glm::mat4(1.0f), pos1);
-	glm::mat4 topBody1 = M_top1 * glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.5f, 0.5f));
-	DrawCube(gTank, shaderProgramID, topBody1, glm::vec3(0.784f, 0.635f, 0.784f));
-
-	glm::mat4 M_top2 = M_turret * glm::translate(glm::mat4(1.0f), pos2);
-	glm::mat4 topBody2 = M_top2 * glm::scale(glm::mat4(1.0f), glm::vec3(0.75f, 0.5f, 0.5f));
-	DrawCube(gTank, shaderProgramID, topBody2, glm::vec3(0.784f, 0.635f, 0.784f));
-
-	// 깃대
-	glm::mat4 flag1 = M_top1
-		* glm::rotate(glm::mat4(1.0f), glm::radians(angleFlag1), glm::vec3(1.0f, 0.0f, 0.0f))
-		* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.6f, 0.0f))
-		* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 1.0f, 0.1f));
-	DrawCube(gTank, shaderProgramID, flag1, glm::vec3(1.0f, 0.7f, 0.3f));
-
-	glm::mat4 flag2 = M_top2
-		* glm::rotate(glm::mat4(1.0f), glm::radians(angleFlag2), glm::vec3(1.0f, 0.0f, 0.0f))
-		* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.6f, 0.0f))
-		* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 1.0f, 0.1f));
-	DrawCube(gTank, shaderProgramID, flag2, glm::vec3(1.0f, 0.7f, 0.3f));
-
-	// 포신
-	glm::mat4 barrel1 = M_top1
-		* glm::rotate(glm::mat4(1.0f), glm::radians(angleBarel1), glm::vec3(0.0f, 1.0f, 0.0f))
-		* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.2f, 0.5f))
-		* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 1.0f));
-	DrawCube(gTank, shaderProgramID, barrel1, glm::vec3(0.5f, 0.0f, 0.5f));
-
-	glm::mat4 barrel2 = M_top2
-		* glm::rotate(glm::mat4(1.0f), glm::radians(angleBarel2), glm::vec3(0.0f, 1.0f, 0.0f))
-		* glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.2f, 0.5f))
-		* glm::scale(glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 1.0f));
-	DrawCube(gTank, shaderProgramID, barrel2, glm::vec3(0.5f, 0.0f, 0.5f));
 
 	glutSwapBuffers();
 }
