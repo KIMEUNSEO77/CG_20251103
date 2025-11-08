@@ -39,7 +39,10 @@ bool closeShield = false;
 float moveCameraZ = 0.0f; float moveCameraX = 0.0f;
 bool rotatingCameraY_plus = false; bool rotatingCameraY_minus = false; float cameraAngleY = 0.0f;
 float moveX = 0.0f; float moveZ = 0.0f; float moveSpeed = 0.05f;
-float angleY = 0.0f;  // 움직일 때 방향이 바뀌어야 함.
+float angleY = 0.0f;  // 움직일 때 방향 (로봇 전체 방향)
+float angleArm_X = 0.0f;   //  팔 각도
+int dir = 1;
+float angleLeg_X = 0.0f;   //  다리 각도
 
 float randomFloat(float a, float b)
 {
@@ -91,6 +94,17 @@ void Timer(int value)
 	glutTimerFunc(16, Timer, 0);
 }
 
+void MoveArmX()
+{
+	if (angleArm_X > 45.0f) dir = -1;
+	else if (angleArm_X < -45.0f) dir = 1;
+	angleArm_X += dir * 2.0f;
+
+	if (angleLeg_X > 10.0f) dir = -1;
+	else if (angleLeg_X < -10.0f) dir = 1;
+	angleLeg_X += dir * 2.0f;
+}
+
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
@@ -112,13 +126,13 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 'Y':
 		rotatingCameraY_minus = !rotatingCameraY_minus; rotatingCameraY_plus = false; break;
 	case 'w':
-		moveZ -= moveSpeed; angleY = 180.0f; glutPostRedisplay(); break;
+		moveZ -= moveSpeed; angleY = 180.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 's':
-		 moveZ += moveSpeed; angleY = 0.0f; glutPostRedisplay(); break;
+		 moveZ += moveSpeed; angleY = 0.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 'a':
-		moveX -= moveSpeed; angleY = -90.0f; glutPostRedisplay(); break;
+		moveX -= moveSpeed; angleY = -90.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 'd':
-		moveX += moveSpeed; angleY = 90.0f; glutPostRedisplay(); break;
+		moveX += moveSpeed; angleY = 90.0f;  MoveArmX(); glutPostRedisplay(); break;
 	case 'q': exit(0); break;
 	}
 }
@@ -271,22 +285,26 @@ GLvoid drawScene()
 	// 왼팔
 	glm::mat4 robotArmL = robotBase;
 	robotArmL = glm::translate(robotArmL, glm::vec3(-0.5f, -1.0f, 0.0f));
+	robotArmL = glm::rotate(robotArmL, glm::radians(angleArm_X), glm::vec3(1.0f, 0.0f, 0.0f));
 	robotArmL = glm::scale(robotArmL, glm::vec3(0.3f, 1.2f, 0.3f));
 	DrawCube(gCube, shaderProgramID, robotArmL, glm::vec3(0.7f, 0.6f, 0.7f));
 	// 오른팔
 	glm::mat4 robotArmR = robotBase;
 	robotArmR = glm::translate(robotArmR, glm::vec3(0.5f, -1.0f, 0.0f));
+	robotArmR = glm::rotate(robotArmR, glm::radians(-angleArm_X), glm::vec3(1.0f, 0.0f, 0.0f));
 	robotArmR = glm::scale(robotArmR, glm::vec3(0.3f, 1.2f, 0.3f));
 	DrawCube(gCube, shaderProgramID, robotArmR, glm::vec3(0.3f, 0.4f, 0.3f));
 
 	// 왼다리
 	glm::mat4 robotLegL = robotBase;
 	robotLegL = glm::translate(robotLegL, glm::vec3(-0.2f, -2.5f, 0.0f));
+	robotLegL = glm::rotate(robotLegL, glm::radians(-angleLeg_X), glm::vec3(1.0f, 0.0f, 0.0f));
 	robotLegL = glm::scale(robotLegL, glm::vec3(0.4f, 2.5f, 0.4f));
 	DrawCube(gCube, shaderProgramID, robotLegL, glm::vec3(0.8f, 0.5f, 0.5f));
 	// 오른다리
 	glm::mat4 robotLegR = robotBase;
 	robotLegR = glm::translate(robotLegR, glm::vec3(0.2f, -2.5f, 0.0f));
+	robotLegR = glm::rotate(robotLegR, glm::radians(angleLeg_X), glm::vec3(1.0f, 0.0f, 0.0f));
 	robotLegR = glm::scale(robotLegR, glm::vec3(0.4f, 2.5f, 0.4f));
 	DrawCube(gCube, shaderProgramID, robotLegR, glm::vec3(0.5f, 0.5f, 0.8f));
 
