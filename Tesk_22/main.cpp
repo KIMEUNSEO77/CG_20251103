@@ -38,6 +38,7 @@ bool openShield = false; float shieldY = 0.0f;
 bool closeShield = false;
 float moveCameraZ = 0.0f; float moveCameraX = 0.0f;
 bool rotatingCameraY_plus = false; bool rotatingCameraY_minus = false; float cameraAngleY = 0.0f;
+float moveX = 0.0f; float moveZ = 0.0f; float moveSpeed = 0.05f;
 
 float randomFloat(float a, float b)
 {
@@ -109,6 +110,14 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		rotatingCameraY_plus = !rotatingCameraY_plus; rotatingCameraY_minus = false; break;
 	case 'Y':
 		rotatingCameraY_minus = !rotatingCameraY_minus; rotatingCameraY_plus = false; break;
+	case 'w':
+		moveZ += moveSpeed; glutPostRedisplay(); break;
+	case 's':
+		moveZ -= moveSpeed; glutPostRedisplay(); break;
+	case 'a':
+		moveX -= moveSpeed; glutPostRedisplay(); break;
+	case 'd':
+		moveX += moveSpeed; glutPostRedisplay(); break;
 	case 'q': exit(0); break;
 	}
 }
@@ -237,42 +246,44 @@ GLvoid drawScene()
 	}
 
 	// ·Îº¿ ±×¸®±â
+	glm::mat4 robotBase = share;
+	robotBase = glm::translate(robotBase, glm::vec3(moveX, 0.0f, moveZ));
 	// ¸Ó¸®
-	glm::mat4 robotHead = share;
+	glm::mat4 robotHead = robotBase;
 	robotHead = glm::translate(robotHead, glm::vec3(0.0f, 0.0f, 0.0f));
 	robotHead = glm::scale(robotHead, glm::vec3(1.0f, 1.0f, 1.0f));
 	DrawCube(gCube, shaderProgramID, robotHead, glm::vec3(1.0f, 0.7f, 0.3f));
 
 	// ÄÚ
-	glm::mat4 robotNose = share;
+	glm::mat4 robotNose = robotBase;
 	robotNose = glm::translate(robotNose, glm::vec3(0.0f, 0.0f, 0.5f));
 	robotNose = glm::scale(robotNose, glm::vec3(0.2f, 0.2f, 0.3f));
 	DrawCube(gCube, shaderProgramID, robotNose, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	// ¸öÅë
-	glm::mat4 robotBody = share;
+	glm::mat4 robotBody = robotBase;
 	robotBody = glm::translate(robotBody, glm::vec3(0.0f, -1.0f, 0.0f));
 	robotBody = glm::scale(robotBody, glm::vec3(1.0f, 1.5f, 0.5f));
 	DrawCube(gCube, shaderProgramID, robotBody, glm::vec3(0.5f, 0.9f, 0.5f));
 
 	// ¿ÞÆÈ
-	glm::mat4 robotArmL = share;
+	glm::mat4 robotArmL = robotBase;
 	robotArmL = glm::translate(robotArmL, glm::vec3(-0.5f, -1.0f, 0.0f));
 	robotArmL = glm::scale(robotArmL, glm::vec3(0.3f, 1.2f, 0.3f));
 	DrawCube(gCube, shaderProgramID, robotArmL, glm::vec3(0.7f, 0.6f, 0.7f));
 	// ¿À¸¥ÆÈ
-	glm::mat4 robotArmR = share;
+	glm::mat4 robotArmR = robotBase;
 	robotArmR = glm::translate(robotArmR, glm::vec3(0.5f, -1.0f, 0.0f));
 	robotArmR = glm::scale(robotArmR, glm::vec3(0.3f, 1.2f, 0.3f));
 	DrawCube(gCube, shaderProgramID, robotArmR, glm::vec3(0.3f, 0.4f, 0.3f));
 
 	// ¿Þ´Ù¸®
-	glm::mat4 robotLegL = share;
+	glm::mat4 robotLegL = robotBase;
 	robotLegL = glm::translate(robotLegL, glm::vec3(-0.2f, -2.5f, 0.0f));
 	robotLegL = glm::scale(robotLegL, glm::vec3(0.4f, 2.5f, 0.4f));
 	DrawCube(gCube, shaderProgramID, robotLegL, glm::vec3(0.8f, 0.5f, 0.5f));
 	// ¿À¸¥´Ù¸®
-	glm::mat4 robotLegR = share;
+	glm::mat4 robotLegR = robotBase;
 	robotLegR = glm::translate(robotLegR, glm::vec3(0.2f, -2.5f, 0.0f));
 	robotLegR = glm::scale(robotLegR, glm::vec3(0.4f, 2.5f, 0.4f));
 	DrawCube(gCube, shaderProgramID, robotLegR, glm::vec3(0.5f, 0.5f, 0.8f));
