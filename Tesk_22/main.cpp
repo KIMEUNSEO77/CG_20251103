@@ -36,6 +36,7 @@ std::vector<Obstacle> gObstacles(3);
 
 bool openShield = false; float shieldY = 0.0f;
 bool closeShield = false;
+float moveCameraZ = 0.0f; float moveCameraX = 0.0f;
 
 float randomFloat(float a, float b)
 {
@@ -87,14 +88,20 @@ void Timer(int value)
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
-	{
-	
+	{	
 	case 'o':
-		openShield = true; closeShield = false;
-		break;
+		openShield = true; closeShield = false; break;
 	case 'O':
-		closeShield = true; openShield = false;
-		break;
+		closeShield = true; openShield = false; break;
+	case 'z':
+		moveCameraZ += 0.1f; glutPostRedisplay(); break;
+	case 'Z':
+		moveCameraZ -= 0.1f; glutPostRedisplay(); break;
+	case 'x':
+		moveCameraX += 0.1f; glutPostRedisplay(); break;
+	case 'X':
+		moveCameraX -= 0.1f; glutPostRedisplay(); break;
+	case 'q': exit(0); break;
 	}
 }
 
@@ -183,7 +190,7 @@ GLvoid drawScene()
 	GLint viewLoc = glGetUniformLocation(shaderProgramID, "view");
 	GLint projLoc = glGetUniformLocation(shaderProgramID, "projection");
 
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 8.0f);
+	glm::vec3 cameraPos = glm::vec3(moveCameraX, 0.0f, 8.0f + moveCameraZ);
 	glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
