@@ -229,6 +229,19 @@ void IncreaseSpeed(float delta)
 	}
 }
 
+void Reset()
+{
+	openShield = false; shieldY = 0.0f;
+	closeShield = false;
+
+	moveCameraX = 0.0f; moveCameraZ = 0.0f;
+	rotatingCameraY_plus = false; rotatingCameraY_minus = false; cameraAngleY = 0.0f;
+	moveX = 0.0f; moveZ = 0.0f; moveSpeed = 0.05f;
+	angleY = 0.0f; angleArm_X = 0.0f; angleLeg_X = 0.0f;
+	limitAngleX = 45.0f; limitAngleY = 10.0f;
+	jumping = false; jumpY = 0.0f; jumpSpeed = 0.2f;
+}
+
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
@@ -267,6 +280,8 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			jumping = true;
 		}
 		break;
+	case 'i':
+		Reset(); glutPostRedisplay(); break;
 	case 'q': exit(0); break;
 	}
 }
@@ -357,7 +372,7 @@ GLvoid drawScene()
 	GLint projLoc = glGetUniformLocation(shaderProgramID, "projection");
 
 	glm::vec3 cameraPos = glm::vec3(moveCameraX, 0.0f, 16.0f + moveCameraZ);
-	glm::vec3 cameraDirection = glm::vec3(moveCameraX, 0.0f, 0.0f);
+	glm::vec3 cameraDirection = glm::vec3(moveCameraX, 0.0f, 0.0f + moveCameraZ);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	// 카메라 y축 회전
