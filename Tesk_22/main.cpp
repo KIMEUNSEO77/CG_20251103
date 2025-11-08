@@ -82,8 +82,8 @@ void Timer(int value)
 		}
 	}
 
-	if (rotatingCameraY_plus) cameraAngleY += 0.2f;
-	if (rotatingCameraY_minus) cameraAngleY -= 0.2f;
+	if (rotatingCameraY_plus) cameraAngleY += 0.4f;
+	if (rotatingCameraY_minus) cameraAngleY -= 0.4f;
 
 	glutPostRedisplay();
 	glutTimerFunc(16, Timer, 0);
@@ -198,7 +198,7 @@ GLvoid drawScene()
 	GLint viewLoc = glGetUniformLocation(shaderProgramID, "view");
 	GLint projLoc = glGetUniformLocation(shaderProgramID, "projection");
 
-	glm::vec3 cameraPos = glm::vec3(moveCameraX, 0.0f, 8.0f + moveCameraZ);
+	glm::vec3 cameraPos = glm::vec3(moveCameraX, 0.0f, 16.0f + moveCameraZ);
 	glm::vec3 cameraDirection = glm::vec3(moveCameraX, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
