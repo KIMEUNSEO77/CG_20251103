@@ -45,6 +45,8 @@ int dir = 1;
 float angleLeg_X = 0.0f;   //  다리 각도
 float cubeHalf = 3.0f;    // 큐브 길이
 float limitAngleX = 45.0f; float limitAngleY = 10.0f;
+bool jumping = false; float jumpY = 0.0f; float jumpSpeed = 0.2f;
+float gravity = -0.01f;
 
 float randomFloat(float a, float b)
 {
@@ -91,6 +93,18 @@ void Timer(int value)
 
 	if (rotatingCameraY_plus) cameraAngleY += 0.4f;
 	if (rotatingCameraY_minus) cameraAngleY -= 0.4f;
+
+	if (jumping)
+	{
+		jumpY += jumpSpeed;
+		jumpSpeed += gravity;
+		if (jumpY <= 0.0f)
+		{
+			jumpY = 0.0f;
+			jumping = false;
+			jumpSpeed = 0.2f;
+		}
+	}
 
 	glutPostRedisplay();
 	glutTimerFunc(16, Timer, 0);
@@ -192,6 +206,12 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		IncreaseSpeed(0.01f); break;
 	case '-':
 		IncreaseSpeed(-0.01f); break;
+	case 'j':
+		if (!jumping)
+		{
+			jumping = true;
+		}
+		break;
 	case 'q': exit(0); break;
 	}
 }
@@ -321,7 +341,7 @@ GLvoid drawScene()
 
 	// 로봇 그리기
 	glm::mat4 robotBase = share;
-	robotBase = glm::translate(robotBase, glm::vec3(moveX, 0.0f, moveZ));
+	robotBase = glm::translate(robotBase, glm::vec3(moveX, jumpY, moveZ));
 	robotBase = glm::rotate(robotBase, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 	// 머리
 	glm::mat4 robotHead = robotBase;
