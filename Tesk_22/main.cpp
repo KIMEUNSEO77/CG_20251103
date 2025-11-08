@@ -39,6 +39,7 @@ bool closeShield = false;
 float moveCameraZ = 0.0f; float moveCameraX = 0.0f;
 bool rotatingCameraY_plus = false; bool rotatingCameraY_minus = false; float cameraAngleY = 0.0f;
 float moveX = 0.0f; float moveZ = 0.0f; float moveSpeed = 0.05f;
+float angleY = 0.0f;  // 움직일 때 방향이 바뀌어야 함.
 
 float randomFloat(float a, float b)
 {
@@ -111,13 +112,13 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 'Y':
 		rotatingCameraY_minus = !rotatingCameraY_minus; rotatingCameraY_plus = false; break;
 	case 'w':
-		moveZ += moveSpeed; glutPostRedisplay(); break;
+		moveZ -= moveSpeed; angleY = 180.0f; glutPostRedisplay(); break;
 	case 's':
-		moveZ -= moveSpeed; glutPostRedisplay(); break;
+		 moveZ += moveSpeed; angleY = 0.0f; glutPostRedisplay(); break;
 	case 'a':
-		moveX -= moveSpeed; glutPostRedisplay(); break;
+		moveX -= moveSpeed; angleY = -90.0f; glutPostRedisplay(); break;
 	case 'd':
-		moveX += moveSpeed; glutPostRedisplay(); break;
+		moveX += moveSpeed; angleY = 90.0f; glutPostRedisplay(); break;
 	case 'q': exit(0); break;
 	}
 }
@@ -248,6 +249,7 @@ GLvoid drawScene()
 	// 로봇 그리기
 	glm::mat4 robotBase = share;
 	robotBase = glm::translate(robotBase, glm::vec3(moveX, 0.0f, moveZ));
+	robotBase = glm::rotate(robotBase, glm::radians(angleY), glm::vec3(0.0f, 1.0f, 0.0f));
 	// 머리
 	glm::mat4 robotHead = robotBase;
 	robotHead = glm::translate(robotHead, glm::vec3(0.0f, 0.0f, 0.0f));
