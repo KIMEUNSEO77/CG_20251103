@@ -70,6 +70,20 @@ void InitObstacles()
 	}
 }
 
+// 충돌 검사
+bool CheckLegCollision(const glm::vec3& legPos, const glm::vec3& legSize,
+	const glm::vec3& obsPos, const glm::vec3& obsSize)
+{
+	glm::vec3 legMin = legPos - legSize * 0.5f;
+	glm::vec3 legMax = legPos + legSize * 0.5f;
+	glm::vec3 obsMin = obsPos - obsSize * 0.5f;
+	glm::vec3 obsMax = obsPos + obsSize * 0.5f;
+
+	return (legMin.x <= obsMax.x && legMax.x >= obsMin.x) &&
+		(legMin.y <= obsMax.y && legMax.y >= obsMin.y) &&
+		(legMin.z <= obsMax.z && legMax.z >= obsMin.z);
+}
+
 void Timer(int value)
 {
 	if (openShield)
@@ -103,6 +117,22 @@ void Timer(int value)
 			jumpY = 0.0f;
 			jumping = false;
 			jumpSpeed = 0.2f;
+
+			float legY = jumpY - 2.2f;
+			glm::vec3 legSize(0.2f, 2.0f, 0.2f);
+			glm::vec3 leftLegPos(moveX - 0.1f, legY, moveZ);
+			glm::vec3 rightLegPos(moveX + 0.1f, legY, moveZ);
+
+			for (const auto& obs : gObstacles)
+			{
+				if (CheckLegCollision(leftLegPos, legSize, obs.position, obs.scale) ||
+					CheckLegCollision(rightLegPos, legSize, obs.position, obs.scale))
+				{
+					// 장애물 위에 착지: jumpY를 장애물 위로 조정
+					jumpY = obs.position.y + obs.scale.y * 0.5f + 3.5f;
+					break;
+				}
+			}
 		}
 	}
 
@@ -123,6 +153,17 @@ void MoveArmX()
 
 void MoveX(float speed)
 {
+	float nextX = moveX + speed;
+	float legY = jumpY - 2.2f;
+	glm::vec3 legSize(0.2f, 2.0f, 0.2f);
+	glm::vec3 leftLegPos(nextX - 0.1f, legY, moveZ);
+	glm::vec3 rightLegPos(nextX + 0.1f, legY, moveZ);
+	for (const auto& obs : gObstacles)
+	{
+		if (CheckLegCollision(leftLegPos, legSize, obs.position, obs.scale) ||
+			CheckLegCollision(rightLegPos, legSize, obs.position, obs.scale))
+			return; // 충돌 시 이동 금지
+	}
 	if ((moveX + speed > cubeHalf))
 	{
 		moveX = cubeHalf;
@@ -139,6 +180,20 @@ void MoveX(float speed)
 
 void MoveZ(float speed)
 {
+	float nextZ = moveZ + speed;
+	float legY = jumpY - 2.2f;
+	glm::vec3 legSize(0.2f, 2.0f, 0.2f);
+
+	glm::vec3 leftLegPos(moveX - 0.1f, legY, nextZ);
+	glm::vec3 rightLegPos(moveX + 0.1f, legY, nextZ);
+
+	for (const auto& obs : gObstacles)
+	{
+		if (CheckLegCollision(leftLegPos, legSize, obs.position, obs.scale) ||
+			CheckLegCollision(rightLegPos, legSize, obs.position, obs.scale))
+			return; // 충돌 시 이동 금지
+	}
+
 	if ((moveZ + speed > cubeHalf))
 	{
 		moveZ = cubeHalf;
