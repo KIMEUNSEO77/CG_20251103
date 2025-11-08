@@ -37,6 +37,7 @@ std::vector<Obstacle> gObstacles(3);
 bool openShield = false; float shieldY = 0.0f;
 bool closeShield = false;
 float moveCameraZ = 0.0f; float moveCameraX = 0.0f;
+bool rotatingCameraY_plus = false; bool rotatingCameraY_minus = false; float cameraAngleY = 0.0f;
 
 float randomFloat(float a, float b)
 {
@@ -81,6 +82,9 @@ void Timer(int value)
 		}
 	}
 
+	if (rotatingCameraY_plus) cameraAngleY += 0.2f;
+	if (rotatingCameraY_minus) cameraAngleY -= 0.2f;
+
 	glutPostRedisplay();
 	glutTimerFunc(16, Timer, 0);
 }
@@ -101,6 +105,10 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		moveCameraX += 0.1f; glutPostRedisplay(); break;
 	case 'X':
 		moveCameraX -= 0.1f; glutPostRedisplay(); break;
+	case 'y':
+		rotatingCameraY_plus = !rotatingCameraY_plus; rotatingCameraY_minus = false; break;
+	case 'Y':
+		rotatingCameraY_minus = !rotatingCameraY_minus; rotatingCameraY_plus = false; break;
 	case 'q': exit(0); break;
 	}
 }
@@ -194,6 +202,11 @@ GLvoid drawScene()
 	glm::vec3 cameraDirection = glm::vec3(moveCameraX, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	// 카메라 y축 회전
+	glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(cameraAngleY), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	cameraPos = glm::vec3(rotation * glm::vec4(cameraPos - cameraDirection, 1.0f)) + cameraDirection;
+
 	glm::mat4 vTransform = glm::mat4(1.0f);
 	vTransform = glm::lookAt(cameraPos, cameraDirection, cameraUp);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &vTransform[0][0]);
@@ -266,7 +279,7 @@ GLvoid drawScene()
 
 	// 가림막
 	glm::mat4 shield = share;
-	shield = glm::translate(shield, glm::vec3(0.0f, shieldY, 3.3f));
+	shield = glm::translate(shield, glm::vec3(0.0f, shieldY, 3.5f));
 	shield = glm::scale(shield, glm::vec3(7.0f, 7.0f, 0.1f));
 	DrawCube(gCube, shaderProgramID, shield, glm::vec3(0.7f, 0.7f, 0.7f));
 
