@@ -34,6 +34,9 @@ struct Obstacle
 };
 std::vector<Obstacle> gObstacles(3);
 
+bool openShield = false; float shieldY = 0.0f;
+bool closeShield = false;
+
 float randomFloat(float a, float b)
 {
 	std::random_device rd;
@@ -53,6 +56,45 @@ void InitObstacles()
 		gObstacles[i].scale = glm::vec3(randomFloat(0.2f, 1.5f));
 		gObstacles[i].color = glm::vec3(randomFloat(0.0f, 1.0f), randomFloat(0.0f, 1.0f), 
 			randomFloat(0.0f, 1.0f));
+	}
+}
+
+void Timer(int value)
+{
+	if (openShield)
+	{
+		shieldY += 0.02f;
+		if (shieldY >= 7.5f)
+		{
+			shieldY = 7.5f;
+			openShield = false;
+		}
+	}
+	if (closeShield)
+	{
+		shieldY -= 0.02f;
+		if (shieldY <= 0.0f)
+		{
+			shieldY = 0.0f;
+			closeShield = false;
+		}
+	}
+
+	glutPostRedisplay();
+	glutTimerFunc(16, Timer, 0);
+}
+
+GLvoid Keyboard(unsigned char key, int x, int y)
+{
+	switch (key)
+	{
+	
+	case 'o':
+		openShield = true; closeShield = false;
+		break;
+	case 'O':
+		closeShield = true; openShield = false;
+		break;
 	}
 }
 
@@ -85,6 +127,9 @@ int main(int argc, char** argv)
 	make_vertexShaders();
 	make_fragmentShaders();
 	shaderProgramID = make_shaderProgram();
+
+	glutKeyboardFunc(Keyboard);
+	glutTimerFunc(16, Timer, 0);
 
 	glutMainLoop();
 
@@ -160,6 +205,8 @@ GLvoid drawScene()
 	DrawCenterCube(gCube, shaderProgramID, centerCube, glm::vec3(0.678f, 0.847f, 0.902f));
 
 	glCullFace(GL_BACK);  // 뒷면 제거
+
+
 	// 장애물 그리기
 	for (const auto& obs : gObstacles)
 	{
@@ -179,7 +226,7 @@ GLvoid drawScene()
 	// 코
 	glm::mat4 robotNose = share;
 	robotNose = glm::translate(robotNose, glm::vec3(0.0f, 0.0f, 0.5f));
-	robotNose = glm::scale(robotNose, glm::vec3(0.2f, 0.2f, 0.5f));
+	robotNose = glm::scale(robotNose, glm::vec3(0.2f, 0.2f, 0.3f));
 	DrawCube(gCube, shaderProgramID, robotNose, glm::vec3(1.0f, 0.0f, 0.0f));
 
 	// 몸통
@@ -210,7 +257,11 @@ GLvoid drawScene()
 	robotLegR = glm::scale(robotLegR, glm::vec3(0.4f, 2.5f, 0.4f));
 	DrawCube(gCube, shaderProgramID, robotLegR, glm::vec3(0.5f, 0.5f, 0.8f));
 
-
+	// 가림막
+	glm::mat4 shield = share;
+	shield = glm::translate(shield, glm::vec3(0.0f, shieldY, 3.3f));
+	shield = glm::scale(shield, glm::vec3(7.0f, 7.0f, 0.1f));
+	DrawCube(gCube, shaderProgramID, shield, glm::vec3(0.7f, 0.7f, 0.7f));
 
 
 	glCullFace(GL_FRONT);  // 앞면 제거
