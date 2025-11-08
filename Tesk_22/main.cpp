@@ -44,6 +44,7 @@ float angleArm_X = 0.0f;   //  팔 각도
 int dir = 1;
 float angleLeg_X = 0.0f;   //  다리 각도
 float cubeHalf = 3.0f;    // 큐브 길이
+float limitAngleX = 45.0f; float limitAngleY = 10.0f;
 
 float randomFloat(float a, float b)
 {
@@ -97,12 +98,12 @@ void Timer(int value)
 
 void MoveArmX()
 {
-	if (angleArm_X > 45.0f) dir = -1;
-	else if (angleArm_X < -45.0f) dir = 1;
+	if (angleArm_X > limitAngleX) dir = -1;
+	else if (angleArm_X < -limitAngleX) dir = 1;
 	angleArm_X += dir * 2.0f;
 
-	if (angleLeg_X > 10.0f) dir = -1;
-	else if (angleLeg_X < -20.0f) dir = 1;
+	if (angleLeg_X > limitAngleY) dir = -1;
+	else if (angleLeg_X < -limitAngleY) dir = 1;
 	angleLeg_X += dir * 1.0f;
 }
 
@@ -137,6 +138,28 @@ void MoveZ(float speed)
 	moveZ += speed;
 }
 
+void IncreaseSpeed(float delta)
+{
+	moveSpeed += delta;
+	if (moveSpeed < 0.01f) moveSpeed = 0.01f;
+	if (moveSpeed > 0.2f) moveSpeed = 0.2f;
+
+	if (delta > 0)
+	{
+		if (limitAngleX < 60.0f)
+			limitAngleX += 3.0f;
+		if (limitAngleY < 20.0f)
+			limitAngleY += 1.0f;
+	}
+	else
+	{
+		if (limitAngleX > 15.0f)
+			limitAngleX -= 3.0f;
+		if (limitAngleY > 5.0f)
+			limitAngleY -= 1.0f;
+	}
+}
+
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
@@ -165,6 +188,10 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		MoveX(-moveSpeed); angleY = -90.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 'd':
 		MoveX(moveSpeed);  angleY = 90.0f; MoveArmX(); glutPostRedisplay(); break;
+	case '+':
+		IncreaseSpeed(0.01f); break;
+	case '-':
+		IncreaseSpeed(-0.01f); break;
 	case 'q': exit(0); break;
 	}
 }
