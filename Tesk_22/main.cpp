@@ -8,6 +8,8 @@
 #include "filetobuf.h"
 #include "shaderMaker.h"
 #include "obj_load.h"
+#include <random>
+#include <vector>
 
 void make_vertexShaders();
 void make_fragmentShaders();
@@ -23,6 +25,36 @@ static const glm::vec3 kFaceColors[6] =
 	{0.784f, 0.635f, 0.784f}, {0.564f, 0.933f, 0.564f}, {1.0f, 0.7f, 0.3f},
 	{1.0f, 0.713f, 0.756f}, {1,0,1}, {0.678f, 0.847f, 0.902f}
 };
+
+struct Obstacle
+{
+	glm::vec3 position;
+	glm::vec3 scale;
+	glm::vec3 color;
+};
+std::vector<Obstacle> gObstacles(3);
+
+float randomFloat(float a, float b)
+{
+	std::random_device rd;
+	std::mt19937 gen(rd());  // Mersenne Twister 엔진
+	std::uniform_real_distribution<float> dist(a, b);
+
+	return dist(gen);
+}
+
+// 장애물 초기화
+void InitObstacles()
+{
+	for (int i = 0; i < gObstacles.size(); ++i)
+	{
+		gObstacles[i].position = glm::vec3(randomFloat(-3.0f, 3.0f), -3.0f, 
+			randomFloat(-3.0f, 3.0f));
+		gObstacles[i].scale = glm::vec3(randomFloat(0.2f, 1.5f));
+		gObstacles[i].color = glm::vec3(randomFloat(0.0f, 1.0f), randomFloat(0.0f, 1.0f), 
+			randomFloat(0.0f, 1.0f));
+	}
+}
 
 int main(int argc, char** argv)
 {
@@ -42,6 +74,8 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);  // 면 제거 활성화
 	glCullFace(GL_FRONT);     // 앞면 제거
 
+	InitObstacles();  // 장애물 초기화
+
 	if (!LoadOBJ_PosNorm_Interleaved("unit_cube.obj", gCube))
 	{
 		std::cerr << "Failed to load cube.obj\n";
@@ -57,8 +91,8 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-// 큐브 그리는 함수
-void DrawCube(const CubeMesh& mesh, GLuint shaderProgram, const glm::mat4& model, const glm::vec3& color)
+// 무대 큐브 그리는 함수
+void DrawCenterCube(const CubeMesh& mesh, GLuint shaderProgram, const glm::mat4& model, const glm::vec3& color)
 {
 	GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
@@ -77,6 +111,20 @@ void DrawCube(const CubeMesh& mesh, GLuint shaderProgram, const glm::mat4& model
 
 		glDrawArrays(GL_TRIANGLES, r.first, r.count);
 	}
+	glBindVertexArray(0);
+}
+
+// 일반 큐브
+void DrawCube(const CubeMesh& mesh, GLuint shaderProgram, const glm::mat4& model, const glm::vec3& color)
+{
+	GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+
+	GLint colorLoc = glGetUniformLocation(shaderProgram, "vColor");
+	glUniform3fv(colorLoc, 1, &color[0]);
+
+	glBindVertexArray(mesh.vao);
+	glDrawArrays(GL_TRIANGLES, 0, mesh.count);
 	glBindVertexArray(0);
 }
 
@@ -105,12 +153,22 @@ GLvoid drawScene()
 	// 큐브 그리기
 	// 공통
 	glm::mat4 share = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-	share = glm::translate(share, glm::vec3(-0.5f, 0.0f, -5.0f));
+	share = glm::translate(share, glm::vec3(0.0f, 0.0f, -5.0f));
 	// 큐브 그리기
-	// 중심 (-0.5, 0, -5) 한변의 길이 5
-	glm::mat4 centerCube = share * glm::scale(glm::mat4(1.0f), glm::vec3(5.0f, 5.0f, 5.0f));
-	DrawCube(gCube, shaderProgramID, centerCube, glm::vec3(0.678f, 0.847f, 0.902f));
+	// 중심 (0, 0, -5) 한변의 길이 7
+	glm::mat4 centerCube = share * glm::scale(glm::mat4(1.0f), glm::vec3(7.0f, 7.0f, 7.0f));
+	DrawCenterCube(gCube, shaderProgramID, centerCube, glm::vec3(0.678f, 0.847f, 0.902f));
 
+	glCullFace(GL_BACK);  // 뒷면 제거
+	// 장애물 그리기
+	for (const auto& obs : gObstacles)
+	{
+		glm::mat4 model = share;
+		model = glm::translate(model, obs.position);
+		model = glm::scale(model, obs.scale);
+		DrawCube(gCube, shaderProgramID, model, obs.color);
+	}
+	glCullFace(GL_FRONT);  // 앞면 제거
 
 	glutSwapBuffers();
 }
