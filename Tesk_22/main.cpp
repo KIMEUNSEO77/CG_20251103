@@ -43,6 +43,7 @@ float angleY = 0.0f;  // 움직일 때 방향 (로봇 전체 방향)
 float angleArm_X = 0.0f;   //  팔 각도
 int dir = 1;
 float angleLeg_X = 0.0f;   //  다리 각도
+float cubeHalf = 3.0f;    // 큐브 길이
 
 float randomFloat(float a, float b)
 {
@@ -105,6 +106,37 @@ void MoveArmX()
 	angleLeg_X += dir * 1.0f;
 }
 
+void MoveX(float speed)
+{
+	if ((moveX + speed > cubeHalf))
+	{
+		moveX = cubeHalf;
+		return;
+	}
+	else if ((moveX + speed < -cubeHalf))
+	{
+		moveX = -cubeHalf;
+		return;
+	}
+
+	moveX += speed;
+}
+
+void MoveZ(float speed)
+{
+	if ((moveZ + speed > cubeHalf))
+	{
+		moveZ = cubeHalf;
+		return;
+	}
+	else if ((moveZ + speed < -cubeHalf))
+	{
+		moveZ = -cubeHalf;
+		return;
+	}
+	moveZ += speed;
+}
+
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
@@ -126,13 +158,13 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 'Y':
 		rotatingCameraY_minus = !rotatingCameraY_minus; rotatingCameraY_plus = false; break;
 	case 'w':
-		moveZ -= moveSpeed; angleY = 180.0f; MoveArmX(); glutPostRedisplay(); break;
+		MoveZ(-moveSpeed); angleY = 180.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 's':
-		 moveZ += moveSpeed; angleY = 0.0f; MoveArmX(); glutPostRedisplay(); break;
+		MoveZ(moveSpeed); angleY = 0.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 'a':
-		moveX -= moveSpeed; angleY = -90.0f; MoveArmX(); glutPostRedisplay(); break;
+		MoveX(-moveSpeed); angleY = -90.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 'd':
-		moveX += moveSpeed; angleY = 90.0f;  MoveArmX(); glutPostRedisplay(); break;
+		MoveX(moveSpeed);  angleY = 90.0f; MoveArmX(); glutPostRedisplay(); break;
 	case 'q': exit(0); break;
 	}
 }
