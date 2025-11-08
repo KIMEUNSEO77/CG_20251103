@@ -100,8 +100,8 @@ void MoveArmX()
 	else if (angleArm_X < -45.0f) dir = 1;
 	angleArm_X += dir * 2.0f;
 
-	if (angleLeg_X > 10.0f) dir = -1;
-	else if (angleLeg_X < -10.0f) dir = 1;
+	if (angleLeg_X > 20.0f) dir = -1;
+	else if (angleLeg_X < -20.0f) dir = 1;
 	angleLeg_X += dir * 2.0f;
 }
 
@@ -279,7 +279,7 @@ GLvoid drawScene()
 	// ¸öÅë
 	glm::mat4 robotBody = robotBase;
 	robotBody = glm::translate(robotBody, glm::vec3(0.0f, -1.0f, 0.0f));
-	robotBody = glm::scale(robotBody, glm::vec3(1.0f, 1.5f, 0.5f));
+	robotBody = glm::scale(robotBody, glm::vec3(1.0f, 1.5f, 1.5f));
 	DrawCube(gCube, shaderProgramID, robotBody, glm::vec3(0.5f, 0.9f, 0.5f));
 
 	// ¿ÞÆÈ
