@@ -21,10 +21,9 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{5c6634cf-a78a-4fc7-a7b8-04b5af91006f}</ProjectGuid>
-    <RootNamespace>CG20251103</RootNamespace>
+    <ProjectGuid>{33f2b749-6678-4083-81a5-90157825c753}</ProjectGuid>
+    <RootNamespace>Tesk22</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>Tesk_23</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
