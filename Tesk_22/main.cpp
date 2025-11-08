@@ -191,7 +191,7 @@ GLvoid drawScene()
 	GLint projLoc = glGetUniformLocation(shaderProgramID, "projection");
 
 	glm::vec3 cameraPos = glm::vec3(moveCameraX, 0.0f, 8.0f + moveCameraZ);
-	glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraDirection = glm::vec3(moveCameraX, 0.0f, 0.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	glm::mat4 vTransform = glm::mat4(1.0f);
