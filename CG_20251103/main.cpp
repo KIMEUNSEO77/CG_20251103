@@ -299,9 +299,14 @@ GLvoid drawScene()
 			float radius = 8.0f;
 			cameraPos = glm::vec3(0.0f, 0.0f, radius);
 
+
 			// X, Y축 회전 적용
-			glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), radX, glm::vec3(1, 0, 0));
-			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
+			glm::mat4 rotX = glm::mat4(1.0f);
+			rotX = glm::rotate(rotX, glm::radians(-15.0f), glm::vec3(1, 0, 0)) *
+				glm::rotate(rotX, glm::radians(radX), glm::vec3(1, 0, 0));
+			//glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
+			glm::mat4 rotYmat = glm::mat4(1.0f);
+			rotYmat = glm::rotate(rotYmat, glm::radians(radY), glm::vec3(0, 1, 0));
 			cameraPos = glm::vec3(rotYmat * rotX * glm::vec4(cameraPos, 1.0f));
 
 			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -338,25 +343,28 @@ GLvoid drawScene()
 		}
 		else
 		{
-			// 2: xy 평면(앞에서 바라봄, 직각투영) + X, Y, Z축 회전
+			glDisable(GL_DEPTH_TEST);  // 은면 제거 비활성화
 			float radius = 8.0f;
 			cameraPos = glm::vec3(0.0f, 0.0f, radius);
 
 			// X, Y축 회전 적용
-			glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), radX, glm::vec3(1, 0, 0));
-			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
+			glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), glm::radians(15.0f), glm::vec3(1, 0, 0));
+			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), glm::radians(-15.0f), glm::vec3(0, 1, 0));
 			cameraPos = glm::vec3(rotYmat * rotX * glm::vec4(cameraPos, 1.0f));
 
 			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 
-			// up벡터는 +y, Z축 회전 적용
+			// Z축 회전(up벡터 회전)
 			cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 			glm::vec3 dir = glm::normalize(cameraTarget - cameraPos);
 			glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), radZ, dir);
 			cameraUp = glm::vec3(rollMat * glm::vec4(cameraUp, 0.0f));
 
 			vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-			pTransform = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
+			float aspect = (float)width / (float)height;
+			float halfWidth = 5.0f;  float halfHeight = halfWidth / aspect;
+			pTransform = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, 0.1f, 100.0f);
+			glEnable(GL_DEPTH_TEST);
 		}
 
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &vTransform[0][0]);	
@@ -366,14 +374,15 @@ GLvoid drawScene()
 		float offsetY = moveZ * sin(glm::radians(-15.0f));
 
 		glm::mat4 ground = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-		ground = glm::rotate(ground, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//ground = glm::rotate(ground, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		ground = glm::scale(ground, glm::vec3(100.0f, 0.05f, 100.0f));
 		DrawCube(gTank, shaderProgramID, ground, glm::vec3(1.0f, 0.713f, 0.756f));
 
-		glm::mat4 M_tank = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, offsetY, 0.0f));
+		glm::mat4 M_tank = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));			
 		M_tank = glm::translate(M_tank, glm::vec3(moveX, 0.0f, moveZ));
-		M_tank = glm::rotate(M_tank, glm::radians(-15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		M_tank = glm::rotate(M_tank, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//M_tank = glm::rotate(M_tank, glm::radians(-15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//M_tank = glm::rotate(M_tank, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		//M_tank = glm::translate(M_tank, glm::vec3(moveX, 0.0f, moveZ));
 		glm::mat4 bottomBody = M_tank * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 0.5f, 1.0f));
 		DrawCube(gTank, shaderProgramID, bottomBody, glm::vec3(0.678f, 0.847f, 0.902f));
 
