@@ -56,6 +56,7 @@ bool isCameraWaiting = false;
 int cameraWaitCounter = 0;
 const int cameraWaitFrames = 60; // 1초
 float cameraStartAngle = 0.0f;
+bool rotatingCenterY2 = false;
 
 void Timer(int value)
 {
@@ -63,7 +64,8 @@ void Timer(int value)
 	if (rotatingCameraZ) angleCameraZ += dirCameraZ * 2.0f;
 	if (rotatingCameraX) angleCameraX += dirCameraX * 2.0f;
 	if (rotatingCameraY) angleCameraY += 2.0f;
-	if (rotatingCameraCenterY) angleCameraCenterY += 2.0f;
+	if (rotatingCameraCenterY) angleCameraCenterY += 5.0f;
+	if (rotatingCenterY2) angleCameraCenterY += 2.0f;
 	if (rotatingBarel)
 	{
 		angleBarel1 -= 2.0f;
@@ -194,7 +196,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 'x': rotatingCameraX = !rotatingCameraX; dirCameraX = 1; rotatingCameraZ = false; rotatingCameraY = false; break;
 	case 'X': rotatingCameraX = !rotatingCameraX; dirCameraX = -1; rotatingCameraZ = false; rotatingCameraY = false; break;
 	case 'y': rotatingCameraY = !rotatingCameraY; rotatingCameraX = false; rotatingCameraZ = false; break;
-	case 'r': rotatingCameraCenterY = !rotatingCameraCenterY; rotatingCameraX = false; rotatingCameraZ = false; rotatingCameraY = false; break;
+	case 'r': rotatingCenterY2 = !rotatingCenterY2; rotatingCameraX = false; rotatingCameraZ = false; rotatingCameraY = false; break;
 	case 'g': rotatingBarel = !rotatingBarel; break;
 	case 'p': rotatingFlag = !rotatingFlag; break;
 	case 'i': changingPosition = !changingPosition; break;
@@ -293,18 +295,31 @@ GLvoid drawScene()
 		float radY = glm::radians(angleCameraY);
 		float radZ = glm::radians(angleCameraZ);
 
+		float radiusCenterY = 8.0f;
+		float radCenterY = glm::radians(angleCameraCenterY);
+
 		if (i == 0)
 		{
-			// 0: 원근투영, 일반 3D 카메라 회전
 			float radius = 8.0f;
 			cameraPos = glm::vec3(0.0f, 0.0f, radius);
+
+			if (rotatingCameraCenterY || rotatingCenterY2)
+			{
+				// y축 공전: 카메라가 y축을 중심으로 원을 그림
+				cameraPos = glm::vec3(
+					radiusCenterY * sin(radCenterY),
+					0.0f,
+					radiusCenterY * cos(radCenterY)
+				);
+				cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // 원점 바라봄
+				//cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+			}
 
 
 			// X, Y축 회전 적용
 			glm::mat4 rotX = glm::mat4(1.0f);
 			rotX = glm::rotate(rotX, glm::radians(-15.0f), glm::vec3(1, 0, 0)) *
 				glm::rotate(rotX, glm::radians(radX), glm::vec3(1, 0, 0));
-			//glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
 			glm::mat4 rotYmat = glm::mat4(1.0f);
 			rotYmat = glm::rotate(rotYmat, glm::radians(radY), glm::vec3(0, 1, 0));
 			cameraPos = glm::vec3(rotYmat * rotX * glm::vec4(cameraPos, 1.0f));
@@ -322,11 +337,11 @@ GLvoid drawScene()
 		}
 		else if (i == 1)
 		{
-			// 1: xz 평면(위에서 내려다봄, 직각투영) + Y, Z축 회전
+			// xz 평면
 			float radius = 8.0f;
 			cameraPos = glm::vec3(0.0f, radius, 0.0f);
 
-			// Y축 회전(수평 회전)
+			// Y축 회전
 			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), radY, glm::vec3(0, 1, 0));
 			cameraPos = glm::vec3(rotYmat * glm::vec4(cameraPos, 1.0f));
 
@@ -343,46 +358,47 @@ GLvoid drawScene()
 		}
 		else
 		{
-			glDisable(GL_DEPTH_TEST);  // 은면 제거 비활성화
 			float radius = 8.0f;
 			cameraPos = glm::vec3(0.0f, 0.0f, radius);
 
-			// X, Y축 회전 적용
-			glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), glm::radians(15.0f), glm::vec3(1, 0, 0));
-			glm::mat4 rotYmat = glm::rotate(glm::mat4(1.0f), glm::radians(-15.0f), glm::vec3(0, 1, 0));
+			glm::mat4 rotX = glm::mat4(1.0f);
+			rotX = glm::rotate(rotX, glm::radians(radX), glm::vec3(1, 0, 0));
+			glm::mat4 rotYmat = glm::mat4(1.0f);
+			rotYmat = glm::rotate(rotYmat, glm::radians(radY), glm::vec3(0, 1, 0));
 			cameraPos = glm::vec3(rotYmat * rotX * glm::vec4(cameraPos, 1.0f));
 
 			cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 
-			// Z축 회전(up벡터 회전)
 			cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 			glm::vec3 dir = glm::normalize(cameraTarget - cameraPos);
 			glm::mat4 rollMat = glm::rotate(glm::mat4(1.0f), radZ, dir);
 			cameraUp = glm::vec3(rollMat * glm::vec4(cameraUp, 0.0f));
 
+			if (rotatingCameraCenterY || rotatingCenterY2)
+			{
+				// y축 공전: 카메라가 y축을 중심으로 원을 그림
+				cameraPos = glm::vec3(
+					radiusCenterY * sin(radCenterY),
+					0.0f,
+					radiusCenterY * cos(radCenterY)
+				);
+				cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f); // 원점 바라봄
+				cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+			}
+
 			vTransform = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-			float aspect = (float)width / (float)height;
-			float halfWidth = 5.0f;  float halfHeight = halfWidth / aspect;
-			pTransform = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, 0.1f, 100.0f);
-			glEnable(GL_DEPTH_TEST);
+			pTransform = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, 0.1f, 100.0f);
 		}
 
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &vTransform[0][0]);	
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, &pTransform[0][0]);
 
-		// 기존 drawScene의 바디(바닥, 탱크 등) 복사
-		float offsetY = moveZ * sin(glm::radians(-15.0f));
-
 		glm::mat4 ground = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.5f, 0.0f));
-		//ground = glm::rotate(ground, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		ground = glm::scale(ground, glm::vec3(100.0f, 0.05f, 100.0f));
+		ground = glm::scale(ground, glm::vec3(100.0f, 0.5f, 100.0f));
 		DrawCube(gTank, shaderProgramID, ground, glm::vec3(1.0f, 0.713f, 0.756f));
 
 		glm::mat4 M_tank = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));			
 		M_tank = glm::translate(M_tank, glm::vec3(moveX, 0.0f, moveZ));
-		//M_tank = glm::rotate(M_tank, glm::radians(-15.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		//M_tank = glm::rotate(M_tank, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		//M_tank = glm::translate(M_tank, glm::vec3(moveX, 0.0f, moveZ));
 		glm::mat4 bottomBody = M_tank * glm::scale(glm::mat4(1.0f), glm::vec3(3.0f, 0.5f, 1.0f));
 		DrawCube(gTank, shaderProgramID, bottomBody, glm::vec3(0.678f, 0.847f, 0.902f));
 
